@@ -64,7 +64,6 @@ public class NeoSpringWebApplication {
             }
         }
 
-        // Podemos colocar essa lógica no final deste método, assim que todos forem extraídos.
         for (RequestControllerData item : ControllersMap.values.values()) {
             NeoLogger.log("", "    + " + item.httpMethod + ":" + item.url + " [" + item.controllerClass + "." + item.controllerMethod + "]");
         }

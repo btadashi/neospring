@@ -4,6 +4,7 @@ import com.brunotadashi.neospring.datastructures.ControllersInstances;
 import com.brunotadashi.neospring.datastructures.ControllersMap;
 import com.brunotadashi.neospring.datastructures.RequestControllerData;
 import com.brunotadashi.neospring.util.NeoLogger;
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,6 +24,10 @@ public class NeoDispatchServlet extends HttpServlet {
         if (request.getRequestURL().toString().endsWith("favicon.ico")) {
             return;
         }
+
+        PrintWriter out = new PrintWriter(response.getWriter());
+        Gson gson = new Gson();
+
 
         String url = request.getRequestURI();
         String httpMethod = request.getMethod().toUpperCase();
@@ -49,9 +54,7 @@ public class NeoDispatchServlet extends HttpServlet {
             }
 
             NeoLogger.log("DispatcherServlet", "Invoking method " + controllerMethod.getName() + " to handle request");
-            PrintWriter out = new PrintWriter(response.getWriter());
-            // Invoca o método a partir da instância desse Controller
-            out.println(controllerMethod.invoke(controller));
+            out.println(gson.toJson(controllerMethod.invoke(controller)));
             out.close();
         } catch (Exception ex) {
             ex.printStackTrace();
