@@ -1,8 +1,6 @@
 package com.brunotadashi.neospring.web;
 
-import com.brunotadashi.neospring.datastructures.ControllersInstances;
-import com.brunotadashi.neospring.datastructures.ControllersMap;
-import com.brunotadashi.neospring.datastructures.RequestControllerData;
+import com.brunotadashi.neospring.datastructures.*;
 import com.brunotadashi.neospring.util.NeoLogger;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
@@ -14,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
@@ -45,6 +44,8 @@ public class NeoDispatchServlet extends HttpServlet {
                 NeoLogger.log("DispatcherServlet", "Creating new Controller Instance");
                 controller = Class.forName(data.controllerClass).getDeclaredConstructor().newInstance();
                 ControllersInstances.instances.put(data.controllerClass, controller);
+
+                injectDependencies(controller);
             }
 
             Method controllerMethod = null;
@@ -87,5 +88,38 @@ public class NeoDispatchServlet extends HttpServlet {
         }
 
         return str.toString();
+    }
+
+    private void injectDependencies(Object client) throws Exception {
+        for (Field attr : client.getClass().getDeclaredFields()) {
+            String attrType = attr.getType().getName();
+            NeoLogger.log("IsiDispatcherServlet", " Injected "+ attr.getName() + " Field has type " + attrType);
+            Object serviceImpl;
+            if (DependencyInjectionMap.objects.get(attrType) == null) {
+                // Tem pela declaração da interface?
+                NeoLogger.log("DependencyInjection", "Could not find Instance for " + attrType);
+                String implType = ServiceImplementationMap.implementations.get(attrType);
+
+                // Precisamos bucscar pela declaração da implementação.
+                if (implType != null) {
+                    NeoLogger.log("DependencyInjection", "Found Instance for " + implType);
+
+                    // Se encontramos a declaração da implementação, precisamos ver se tem alguma instância.
+                    serviceImpl = DependencyInjectionMap.objects.get(implType);
+
+                    // Se não tiver, criamos um novo objeto.
+                    if (serviceImpl == null) {
+                        NeoLogger.log("DependencyInjection", "Injecting new object");
+                        serviceImpl = Class.forName(implType).getDeclaredConstructor().newInstance();
+                        DependencyInjectionMap.objects.put(implType, serviceImpl);
+                    }
+
+                    // Precisamos atribuir essa instância ao atributo.
+                    attr.setAccessible(true);
+                    attr.set(client, serviceImpl);
+                    NeoLogger.log("DependencyInjection", "Object injected successfully");
+                }
+            }
+        }
     }
 }

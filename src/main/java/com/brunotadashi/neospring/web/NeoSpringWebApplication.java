@@ -4,6 +4,7 @@ import com.brunotadashi.neospring.annotations.NeoGetMethod;
 import com.brunotadashi.neospring.annotations.NeoPostMethod;
 import com.brunotadashi.neospring.datastructures.ControllersMap;
 import com.brunotadashi.neospring.datastructures.RequestControllerData;
+import com.brunotadashi.neospring.datastructures.ServiceImplementationMap;
 import com.brunotadashi.neospring.explorer.ClassExplorer;
 import com.brunotadashi.neospring.util.NeoLogger;
 import org.apache.catalina.Context;
@@ -60,13 +61,21 @@ public class NeoSpringWebApplication {
                 if (classAnnotation.annotationType().getName().equals("com.brunotadashi.neospring.annotations.NeoController")) {
                     NeoLogger.log("Metadata Explorer", "Found a Controller " + neoClass);
                     extractMethods(neoClass);
+                } else if (classAnnotation.annotationType().getName().equals("com.brunotadashi.neospring.annotations.NeoService")) {
+                    NeoLogger.log("Metadata Explorer", "Found a Service Implementation " + neoClass);
+                    for (Class<?> interf : Class.forName(neoClass).getInterfaces()) {
+                        NeoLogger.log("Metadata Explorer", "    Class implements " + interf.getName());
+                        // Adiciona a interface no Map.
+                        ServiceImplementationMap.implementations.put(interf.getName(), neoClass);
+
+                    }
                 }
             }
         }
 
-        for (RequestControllerData item : ControllersMap.values.values()) {
-            NeoLogger.log("", "    + " + item.httpMethod + ":" + item.url + " [" + item.controllerClass + "." + item.controllerMethod + "]");
-        }
+//        for (RequestControllerData item : ControllersMap.values.values()) {
+//            NeoLogger.log("", "    + " + item.httpMethod + ":" + item.url + " [" + item.controllerClass + "." + item.controllerMethod + "]");
+//        }
         /* End of Class Explorer */
     }
 
